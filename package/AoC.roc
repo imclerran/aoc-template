@@ -1,4 +1,4 @@
-module { stdin, stdout, time } -> [Solution, solve]
+module {read!, stdout!, time!} -> [Solution, solve!]
 
 Solution err : {
     year : U64,
@@ -8,103 +8,101 @@ Solution err : {
     part2 : Str -> Result Str [SomeErr]err,
 } where err implements Inspect
 
-solve : Solution err -> Task {} _
-solve = \{ year, day, title, part1, part2 } ->
-
-    stdout!
-        (
-            Str.joinWith
-                [
-                    green "--- ADVENT OF CODE ",
-                    green "$(Num.toStr year)-$(Num.toStr day): $(title)",
-                    green " ---\n\n",
-                    blue "INPUT:\n",
-                    "Reading input from STDIN...\n\n",
-                ]
-                ""
+solve! : Solution err => Result {} _
+solve! = |{year, day, title, part1, part2}|
+    stdout!(
+        Str.join_with(
+            [
+                green("--- ADVENT OF CODE "),
+                green("${Num.to_str(year)}-${Num.to_str(day)}: ${title}"),
+                green(" ---\n\n"),
+                blue("INPUT:\n"),
+                "Reading input from STDIN...\n\n"
+            ],
+            ""
         )
+    )?
 
-    startRead = time! {}
+    start_read = time!({})
 
-    input : Str
-    input =
-        stdin {}
-        |> Task.await! \bytes ->
-            Str.fromUtf8 bytes
-            |> Result.mapErr \_ -> InvalidUtf8Input
-            |> Task.fromResult
+    input: Str
+    input = 
+        read!({})?
+        |> Str.from_utf8
+        |> Result.map_err(|_| InvalidUtf8Input)?
 
-    endRead = time! {}
+    end_read = time!({})
+    start_part1 = end_read
 
-    startPart1 = time! {}
+    solution_part1: Result Str _
+    solution_part1 = part1(input)
+    end_part1 = time!({})
 
-    solutionPart1 : Result Str _
-    solutionPart1 = part1 input
+    part_one_task! = |{}|
+        when solution_part1 is
+            Ok(str)->
+                caption = blue("PART 1:\n")
+                solution = "${str}\n\n"
+                Str.join_with([caption, solution], "") |> stdout!
 
-    endPart1 = time! {}
+            Err(err) ->
+                caption = red("PART 1 ERROR:\n")
+                error = "${Inspect.to_str(err)}\n\n"
+                Str.join_with([caption, error], "") |> stdout!
+                
+    part_one_task!({})?
+    start_part2 = time!({})
 
-    partOneTask =
-        when solutionPart1 is
-            Ok str -> stdout (Str.joinWith [blue "PART 1:\n", "$(str)\n\n"] "")
-            Err err ->
-                stdout
-                    (
-                        Str.joinWith
-                            [
-                                red "PART 1 ",
-                                red "ERROR:\n",
-                                "$(Inspect.toStr err)\n\n",
-                            ]
-                            ""
-                    )
+    solution_part2: Result Str _
+    solution_part2 = part2(input)
+    end_part2 = time!({})
 
-    partOneTask!
+    part_two_task! = |{}|
+        when solution_part2 is
+            Ok(str) ->
+                caption = blue("PART 2:\n")
+                solution = "${str}\n\n"
+                Str.join_with([caption, solution], "") |> stdout!
 
-    startPart2 = time! {}
+            Err(err) ->
+                caption = red("PART 2 ERROR:\n")
+                error = "${Inspect.to_str(err)}\n\n"
+                Str.join_with([caption, error], "") |> stdout!
 
-    solutionPart2 : Result Str _
-    solutionPart2 = part2 input
+    part_two_task!({})?
 
-    endPart2 = time! {}
+    read_millis =
+        if (end_read - start_read) < 1 then
+            "<1"
+        else
+            Num.to_str(end_read - start_read)
 
-    partTwoTask =
-        when solutionPart2 is
-            Ok str -> stdout (Str.joinWith [blue "PART 2:\n", "$(str)\n\n"] "")
-            Err err ->
-                stdout
-                    (
-                        Str.joinWith
-                            [
-                                red "PART 2 ",
-                                red "ERROR:\n",
-                                "$(Inspect.toStr err)\n\n",
-                            ]
-                            ""
-                    )
+    part1_millis = 
+        if (end_part1 - start_part1) < 1 then
+            "<1"
+        else
+            Num.to_str(end_part1 - start_part1)
 
-    partTwoTask!
+    part2_millis = 
+        if (end_part2 - start_part2) < 1 then
+            "<1"
+        else
+            Num.to_str((end_part2 - start_part2))
 
-    readMillis = if (endRead - startRead) < 1 then "<1" else Num.toStr (endRead - startRead)
-    part1Millis = if (endPart1 - startPart1) < 1 then "<1" else Num.toStr (endPart1 - startPart1)
-    part2Millis = if (endPart2 - startPart2) < 1 then "<1" else Num.toStr (endPart2 - startPart2)
+    Str.join_with(
+        [
+            blue("TIMING:\n"),
+            "READING INPUT:  ",
+            blue("${read_millis}ms\n"),
+            "SOLVING PART 1: ",
+            blue("${part1_millis}ms\n"),
+            "SOLVING PART 2: ",
+            blue("${part2_millis}ms\n"),
+            green("---\n")
+        ],
+        ""
+    ) |> stdout!
 
-    stdout!
-        (
-            Str.joinWith
-                [
-                    blue "TIMING:\n",
-                    "READING INPUT:  ",
-                    blue "$(readMillis)ms\n",
-                    "SOLVING PART 1: ",
-                    blue "$(part1Millis)ms\n",
-                    "SOLVING PART 2: ",
-                    blue "$(part2Millis)ms\n",
-                    green "---\n",
-                ]
-                ""
-        )
-
-
-blue = \str -> "\u(001b)[0;34m$(str)\u(001b)[0m"
-green = \str -> "\u(001b)[0;32m$(str)\u(001b)[0m"
-red = \str -> "\u(001b)[0;31m$(str)\u(001b)[0m"
+blue = |str| "\u(001b)[0;34m${str}\u(001b)[0m"
+green = |str| "\u(001b)[0;32m${str}\u(001b)[0m"
+red = |str| "\u(001b)[0;31m${str}\u(001b)[0m"
