@@ -7,7 +7,7 @@ import pf.Stdin
 import pf.Stdout
 import pf.Utc
 import aoc.AoC {
-    read!: Stdin.read_to_end!,
+    stdin!: Stdin.read_to_end!,
     stdout!: Stdout.write!,
     time!: |{}| Utc.now!({}) |> Utc.to_millis_since_epoch,
 }

@@ -1,4 +1,4 @@
-module {read!, stdout!, time!} -> [Solution, solve!]
+module {stdin!, stdout!, time!} -> [Solution, solve!]
 
 Solution err : {
     year : U64,
@@ -27,7 +27,7 @@ solve! = |{year, day, title, part1, part2}|
 
     input: Str
     input = 
-        read!({})?
+        stdin!({})?
         |> Str.from_utf8
         |> Result.map_err(|_| InvalidUtf8Input)?
 
